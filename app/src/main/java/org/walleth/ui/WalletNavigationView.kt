@@ -31,6 +31,8 @@ class WalletNavigationView(context: Context, attrs: AttributeSet) : NavigationVi
                 header.accountName.text = it.name
             }
 
+            val networkName = networkDefinitionProvider.currentDefinition.getNetworkName()
+            menu.findItem(R.id.menu_switch_network).title = "Network: $networkName (switch)"
             menu.findItem(R.id.menu_save).setVisible(keyStore.hasKeyForForAddress(keyStore.getCurrentAddress()))
         }
     }
@@ -89,6 +91,7 @@ class WalletNavigationView(context: Context, attrs: AttributeSet) : NavigationVi
 
         addressBook.registerChangeObserverWithInitialObservation(this)
         keyStore.registerChangeObserver(this)
+        networkDefinitionProvider.registerChangeObserver(this)
     }
 
 
@@ -96,6 +99,7 @@ class WalletNavigationView(context: Context, attrs: AttributeSet) : NavigationVi
         super.onDetachedFromWindow()
         addressBook.unRegisterChangeObserver(this)
         keyStore.unRegisterChangeObserver(this)
+        networkDefinitionProvider.registerChangeObserver(this)
     }
 
 }

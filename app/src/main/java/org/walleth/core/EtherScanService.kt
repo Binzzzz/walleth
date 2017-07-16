@@ -45,19 +45,15 @@ class EtherScanService : Service() {
 
             var shortcut = false
 
-            transactionProvider.registerChangeObserver(object : ChangeObserver {
+            val shortcutChangeObserver: ChangeObserver = object : ChangeObserver {
                 override fun observeChange() {
                     shortcut = true
                 }
+            }
 
-            })
-
-            keyStore.registerChangeObserver(object : ChangeObserver {
-                override fun observeChange() {
-                    shortcut = true
-                }
-
-            })
+            transactionProvider.registerChangeObserver(shortcutChangeObserver)
+            keyStore.registerChangeObserver(shortcutChangeObserver)
+            networkDefinitionProvider.registerChangeObserver(shortcutChangeObserver)
 
             while (true) {
                 tryFetchFromEtherScan(keyStore.getCurrentAddress().hex)
@@ -65,8 +61,8 @@ class EtherScanService : Service() {
                 relayTransactionsIfNeeded()
 
                 var i = 0
-                while (i < 10000 && !shortcut) {
-                    SystemClock.sleep(1)
+                while (i < 100 && !shortcut) {
+                    SystemClock.sleep(100)
                     i++
                 }
 
