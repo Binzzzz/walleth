@@ -1,5 +1,6 @@
 package org.walleth.data.networks
 
 class NetworkDefinitionProvider {
-    var networkDefinition: NetworkDefinition = RinkebyNetworkDefinition()
+    val allDefinitions = mutableListOf( RinkebyNetworkDefinition() , MainnetNetworkDefinition())
+    var currentDefinition: NetworkDefinition = RinkebyNetworkDefinition()
 }

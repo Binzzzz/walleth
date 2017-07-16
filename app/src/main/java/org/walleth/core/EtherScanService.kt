@@ -16,6 +16,7 @@ import org.walleth.data.BalanceProvider
 import org.walleth.data.exchangerate.ETH_TOKEN
 import org.walleth.data.exchangerate.TokenProvider
 import org.walleth.data.keystore.WallethKeyStore
+import org.walleth.data.networks.NetworkDefinitionProvider
 import org.walleth.data.transactions.TransactionProvider
 import org.walleth.data.transactions.TransactionWithState
 import org.walleth.khex.toHexString
@@ -29,7 +30,6 @@ class EtherScanService : Service() {
     val binder by lazy { Binder() }
     override fun onBind(intent: Intent) = binder
 
-
     val lazyKodein = LazyKodein(appKodein)
 
     val okHttpClient: OkHttpClient by lazyKodein.instance()
@@ -37,6 +37,7 @@ class EtherScanService : Service() {
     val transactionProvider: TransactionProvider by lazyKodein.instance()
     val balanceProvider: BalanceProvider by lazyKodein.instance()
     val tokenProvider: TokenProvider by lazyKodein.instance()
+    val networkDefinitionProvider: NetworkDefinitionProvider by lazyKodein.instance()
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
 
@@ -156,7 +157,8 @@ class EtherScanService : Service() {
 
 
     fun getEtherscanResult(requestString: String, successCallback: (responseJSON: JSONObject) -> Unit) {
-        val urlString = "https://rinkeby.etherscan.io/api?$requestString&apikey=$" + BuildConfig.ETHERSCAN_APIKEY
+        val baseURL = networkDefinitionProvider.currentDefinition.getBlockExplorer().baseAPIURL
+        val urlString = "$baseURL/api?$requestString&apikey=$" + BuildConfig.ETHERSCAN_APIKEY
         val url = Request.Builder().url(urlString).build()
         val newCall: Call = okHttpClient.newCall(url)
         newCall.enqueueOnlySuccess(successCallback)
