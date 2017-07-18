@@ -89,7 +89,11 @@ class EtherScanService : Service() {
                 transaction.transaction.txHash = it.getString("result")
             } else if (it.has("error")) {
                 val error = it.getJSONObject("error")
-                if (error.has("message") && !error.getString("message").startsWith("known")) {
+
+                if (error.has("message") &&
+                        !error.getString("message").startsWith("known") &&
+                        error.getString("message") != "Transaction with the same hash was already imported."
+                        ) {
                     transaction.state.error = it.toString()
                 }
             } else {
