@@ -1,13 +1,15 @@
 package org.walleth.data.networks
 
-import org.walleth.data.SimpleObserveable
+import android.arch.lifecycle.MutableLiveData
 
-class NetworkDefinitionProvider : SimpleObserveable(){
-    val allDefinitions = mutableListOf(RinkebyNetworkDefinition(), MainnetNetworkDefinition() , RopstenNetworkDefinition())
+class NetworkDefinitionProvider : MutableLiveData<NetworkDefinition>() {
+    val allDefinitions = mutableListOf(RinkebyNetworkDefinition(), MainnetNetworkDefinition(), RopstenNetworkDefinition())
 
-    var currentDefinition: NetworkDefinition = RinkebyNetworkDefinition()
-        set(value) {
-            field = value
-            promoteChange()
-        }
+    init {
+        value = allDefinitions.first()
+    }
+
+    fun setCurrent(value: NetworkDefinition) {
+        setValue(value)
+    }
 }

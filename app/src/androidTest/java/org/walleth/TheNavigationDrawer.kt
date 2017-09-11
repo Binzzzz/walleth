@@ -4,6 +4,9 @@ import android.support.test.espresso.Espresso.onView
 import android.support.test.espresso.assertion.ViewAssertions.matches
 import android.support.test.espresso.contrib.DrawerActions.open
 import android.support.test.espresso.matcher.ViewMatchers.*
+import kotlinx.coroutines.experimental.CommonPool
+import kotlinx.coroutines.experimental.android.UI
+import kotlinx.coroutines.experimental.async
 import org.hamcrest.CoreMatchers.not
 import org.junit.Rule
 import org.junit.Test
@@ -33,8 +36,12 @@ class TheNavigationDrawer {
     fun testNameIsDisplayedCorrectly() {
         onView(withId(R.id.drawer_layout)).perform(open())
 
-        rule.activity.runOnUiThread {
-            TestApp.addressBookWithEntries.setEntry(AddressBookEntry("espresso ligi", TestApp.keyStore.getCurrentAddress()))
+        rule.runOnUiThread {
+            async(UI) {
+                async(CommonPool) {
+                    TestApp.testDatabase.addressBook.upsert(AddressBookEntry(name = "espresso ligi", address = TestApp.currentAddressProvider.getCurrent()))
+                }.await()
+            }
         }
 
         onView(withId(R.id.accountName)).check(matches(withText("espresso ligi")))

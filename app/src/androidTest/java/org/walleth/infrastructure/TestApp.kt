@@ -1,5 +1,6 @@
 package org.walleth.infrastructure
 
+import android.arch.persistence.room.Room
 import android.support.v7.app.AppCompatDelegate.MODE_NIGHT_YES
 import com.github.salomonbrys.kodein.Kodein
 import com.github.salomonbrys.kodein.bind
@@ -8,12 +9,13 @@ import com.github.salomonbrys.kodein.singleton
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 import org.walleth.App
+import org.walleth.data.AppDatabase
 import org.walleth.data.BalanceProvider
-import org.walleth.data.addressbook.AddressBook
 import org.walleth.data.config.Settings
 import org.walleth.data.exchangerate.ExchangeRateProvider
 import org.walleth.data.exchangerate.TokenProvider
 import org.walleth.data.keystore.WallethKeyStore
+import org.walleth.data.networks.BaseCurrentAddressProvider
 import org.walleth.data.syncprogress.SyncProgressProvider
 import org.walleth.data.syncprogress.WallethSyncProgress
 import org.walleth.data.tokens.FileBackedTokenProvider
@@ -23,11 +25,10 @@ import org.walleth.testdata.*
 class TestApp : App() {
 
     override fun createKodein() = Kodein.Module {
-        bind<AddressBook>() with singleton { addressBookWithEntries }
         bind<BalanceProvider>() with singleton { balanceProvider }
         bind<TransactionProvider>() with singleton { transactionProvider }
         bind<ExchangeRateProvider>() with singleton { fixedValueExchangeProvider }
-        bind<TokenProvider>() with singleton { FileBackedTokenProvider(this@TestApp,instance()) }
+        bind<TokenProvider>() with singleton { FileBackedTokenProvider(this@TestApp, instance()) }
         bind<SyncProgressProvider>() with singleton {
             SyncProgressProvider().apply {
                 setSyncProgress(WallethSyncProgress(true, 42000, 42042))
@@ -42,15 +43,23 @@ class TestApp : App() {
                 `when`(startupWarningDone).thenReturn(true)
             }
         }
+        bind<BaseCurrentAddressProvider>() with singleton { currentAddressProvider }
+        bind<AppDatabase>() with singleton { Room.inMemoryDatabaseBuilder(this@TestApp, AppDatabase::class.java).build() }
     }
 
     override fun executeCodeWeWillIgnoreInTests() = Unit
+    override fun onCreate() {
+        super.onCreate()
+        testDatabase = appDatabase
+    }
 
     companion object {
         val transactionProvider = TransactionProviderWithTestData()
         val fixedValueExchangeProvider = FixedValueExchangeProvider()
         val balanceProvider = BalanceProviderWithResetFun()
-        val addressBookWithEntries = AddressBookWithTestEntries()
         val keyStore = TestKeyStore()
+        val currentAddressProvider = DefaultCurrentAddressProvider()
+
+        lateinit var testDatabase: AppDatabase
     }
 }

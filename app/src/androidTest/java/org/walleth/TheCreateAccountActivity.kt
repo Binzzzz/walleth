@@ -80,7 +80,7 @@ class TheCreateAccountActivity {
 
         onView(withId(R.id.fab)).perform(closeSoftKeyboard(), click())
 
-        val tested = TestApp.addressBookWithEntries.getEntryForName(Address("0xfdf1210fc262c73d0436236a0e07be419babbbc4"))
+        val tested = TestApp.testDatabase.addressBook.byAddress(Address("0xfdf1210fc262c73d0436236a0e07be419babbbc4"))
 
         assertThat(tested).isNotNull()
         assertThat(tested!!.name).isEqualTo("nameProbe")

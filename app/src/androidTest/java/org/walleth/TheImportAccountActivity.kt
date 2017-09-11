@@ -18,7 +18,7 @@ class TheImportAccountActivity {
     @get:Rule
     var rule = TruleskActivityRule(ImportActivity::class.java) {
         TestApp.balanceProvider.reset()
-        TestApp.addressBookWithEntries.reset()
+        TestApp.testDatabase.addressBook.deleteAll()
     }
 
     @Test
@@ -63,7 +63,7 @@ class TheImportAccountActivity {
 
         onView(withId(R.id.fab)).perform(click())
 
-        val accountName = TestApp.addressBookWithEntries.getEntryForName(TestApp.keyStore.import_result_address)!!.name
+        val accountName = TestApp.testDatabase.addressBook.byAddress(TestApp.keyStore.import_result_address)?.name
 
         assertThat(accountName).isEqualTo("Imported")
     }
@@ -77,7 +77,7 @@ class TheImportAccountActivity {
 
         onView(withId(R.id.fab)).perform(click())
 
-        val accountName = TestApp.addressBookWithEntries.getEntryForName(TestApp.keyStore.import_result_address)!!.name
+        val accountName = TestApp.testDatabase.addressBook.byAddress(TestApp.keyStore.import_result_address)?.name
 
         assertThat(accountName).isEqualTo("new name")
     }

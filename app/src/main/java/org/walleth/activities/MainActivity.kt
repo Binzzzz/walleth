@@ -1,5 +1,6 @@
 package org.walleth.activities
 
+import android.arch.lifecycle.Observer
 import android.content.Intent
 import android.content.res.Configuration
 import android.net.Uri
@@ -24,15 +25,19 @@ import org.ligi.kaxt.setVisibility
 import org.ligi.kaxt.startActivityFromClass
 import org.ligi.kaxtui.alert
 import org.ligi.tracedroid.TraceDroid
+import org.ligi.tracedroid.logging.Log
 import org.ligi.tracedroid.sending.TraceDroidEmailSender
 import org.walleth.R
 import org.walleth.activities.qrscan.startScanActivityForResult
+import org.walleth.data.AppDatabase
 import org.walleth.data.BalanceAtBlock
 import org.walleth.data.BalanceProvider
-import org.walleth.data.addressbook.AddressBook
 import org.walleth.data.config.Settings
 import org.walleth.data.exchangerate.TokenProvider
 import org.walleth.data.keystore.WallethKeyStore
+import org.walleth.data.networks.BaseCurrentAddressProvider
+import org.walleth.data.networks.MainnetNetworkDefinition
+import org.walleth.data.networks.NetworkDefinitionProvider
 import org.walleth.data.syncprogress.SyncProgressProvider
 import org.walleth.data.transactions.TransactionProvider
 import org.walleth.ui.ChangeObserver
@@ -52,9 +57,11 @@ class MainActivity : AppCompatActivity() {
     val transactionProvider: TransactionProvider by lazyKodein.instance()
     val tokenProvider: TokenProvider by lazyKodein.instance()
     val syncProgressProvider: SyncProgressProvider by lazyKodein.instance()
-    val addressBook: AddressBook by lazyKodein.instance()
+    val networkDefinitionProvider: NetworkDefinitionProvider by lazyKodein.instance()
     val keyStore: WallethKeyStore by lazyKodein.instance()
+    val appDatabase: AppDatabase by lazyKodein.instance()
     val settings: Settings by lazyKodein.instance()
+    val currentAddressProvider: BaseCurrentAddressProvider by lazyKodein.instance()
     var lastNightMode: Int? = null
 
     override fun onResume() {
@@ -81,38 +88,44 @@ class MainActivity : AppCompatActivity() {
 
         transactionProvider.registerChangeObserverWithInitialObservation(object : ChangeObserver {
             override fun observeChange() {
-                val allTransactions = transactionProvider.getTransactionsForAddress(keyStore.getCurrentAddress())
-                val incomingTransactions = allTransactions.filter { it.transaction.to == keyStore.getCurrentAddress() }.sortedByDescending { it.transaction.creationEpochSecond }
-                val outgoingTransactions = allTransactions.filter { it.transaction.from == keyStore.getCurrentAddress() }.sortedByDescending { it.transaction.creationEpochSecond }
+                val currentAddress = currentAddressProvider.value
+                if (currentAddress != null) {
+                    val allTransactions = transactionProvider.getTransactionsForAddress(currentAddress)
+                    val incomingTransactions = allTransactions.filter { it.transaction.to == currentAddress }.sortedByDescending { it.transaction.creationEpochSecond }
+                    val outgoingTransactions = allTransactions.filter { it.transaction.from == currentAddress }.sortedByDescending { it.transaction.creationEpochSecond }
 
-                val hasNoTransactions = incomingTransactions.size + outgoingTransactions.size == 0
+                    val hasNoTransactions = incomingTransactions.size + outgoingTransactions.size == 0
 
-                runOnUiThread {
-                    transaction_recycler_out.adapter = TransactionRecyclerAdapter(outgoingTransactions, addressBook, tokenProvider, OUTGOING)
-                    transaction_recycler_in.adapter = TransactionRecyclerAdapter(incomingTransactions, addressBook, tokenProvider, INCOMMING)
+                    runOnUiThread {
+                        transaction_recycler_out.adapter = TransactionRecyclerAdapter(outgoingTransactions, appDatabase, tokenProvider, OUTGOING)
+                        transaction_recycler_in.adapter = TransactionRecyclerAdapter(incomingTransactions, appDatabase, tokenProvider, INCOMMING)
 
-                    empty_view_container.setVisibility(hasNoTransactions)
+                        empty_view_container.setVisibility(hasNoTransactions)
 
-                    send_container.setVisibility(!hasNoTransactions, INVISIBLE)
+                        send_container.setVisibility(!hasNoTransactions, INVISIBLE)
 
-                    transaction_recycler_in.setVisibility(!hasNoTransactions)
-                    transaction_recycler_out.setVisibility(!hasNoTransactions)
+                        transaction_recycler_in.setVisibility(!hasNoTransactions)
+                        transaction_recycler_out.setVisibility(!hasNoTransactions)
 
+                    }
                 }
             }
         })
         balanceProvider.registerChangeObserverWithInitialObservation(object : ChangeObserver {
             override fun observeChange() {
                 var balanceForAddress = BalanceAtBlock(balance = BigInteger("0"), block = 0, tokenDescriptor = tokenProvider.currentToken)
-                balanceProvider.getBalanceForAddress(keyStore.getCurrentAddress(), tokenProvider.currentToken)?.let {
-                    balanceForAddress = it
-                }
+                val address = currentAddressProvider.value
+                if (address != null) {
+                    balanceProvider.getBalanceForAddress(address, tokenProvider.currentToken)?.let {
+                        balanceForAddress = it
+                    }
 
-                runOnUiThread {
-                    value_view.setValue(balanceForAddress.balance, tokenProvider.currentToken)
+                    runOnUiThread {
+                        value_view.setValue(balanceForAddress.balance, tokenProvider.currentToken)
 
-                    if (!syncProgressProvider.currentSyncProgress.isSyncing) {
-                        supportActionBar?.subtitle = "Block " + balanceForAddress.block
+                        if (!syncProgressProvider.currentSyncProgress.isSyncing) {
+                            supportActionBar?.subtitle = "Block " + balanceForAddress.block
+                        }
                     }
                 }
             }
@@ -219,6 +232,13 @@ class MainActivity : AppCompatActivity() {
         current_token_symbol.setOnClickListener {
             startActivityFromClass(SelectTokenActivity::class)
         }
+
+        networkDefinitionProvider.observe(this, Observer {
+            Log.i("foo" + it)
+        })
+
+        networkDefinitionProvider.setCurrent(MainnetNetworkDefinition())
+
     }
 
     override fun onPostCreate(savedInstanceState: Bundle?) {

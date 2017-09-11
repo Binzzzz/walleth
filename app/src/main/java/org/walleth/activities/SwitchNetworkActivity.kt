@@ -52,7 +52,7 @@ open class SwitchNetworkActivity : AppCompatActivity() {
     }
 
     fun getAdapter() = NetworkAdapter(networkDefinitionProvider.allDefinitions) {
-        networkDefinitionProvider.currentDefinition = it
+        networkDefinitionProvider.setCurrent(it)
         balanceProvider.clear()
         transactionPovider.clear()
         finish()

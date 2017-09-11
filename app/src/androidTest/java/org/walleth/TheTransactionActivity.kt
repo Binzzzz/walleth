@@ -15,9 +15,9 @@ import org.walleth.data.ETH_IN_WEI
 import org.walleth.data.transactions.TransactionState
 import org.walleth.data.transactions.TransactionWithState
 import org.walleth.infrastructure.TestApp
-import org.walleth.testdata.AddressBookWithTestEntries.Companion.Room77
-import org.walleth.testdata.AddressBookWithTestEntries.Companion.ShapeShift
 import org.walleth.testdata.DEFAULT_TEST_ADDRESS
+import org.walleth.testdata.Room77
+import org.walleth.testdata.ShapeShift
 import java.math.BigInteger
 
 class TheTransactionActivity {

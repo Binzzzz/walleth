@@ -25,7 +25,7 @@ class TheMainActivity {
 
     @Test
     fun behavesCorrectlyNoTransactions() {
-        TestApp.balanceProvider.setBalance(TestApp.keyStore.getCurrentAddress(), 42, ZERO, ETH_TOKEN)
+        TestApp.balanceProvider.setBalance(TestApp.currentAddressProvider.getCurrent(), 42, ZERO, ETH_TOKEN)
 
         onView(allOf(isDescendantOfA(withId(R.id.value_view)), withId(R.id.current_eth)))
                 .check(matches(withText("0")))
@@ -43,7 +43,7 @@ class TheMainActivity {
     fun behavesCorrectlyWhenBalanceIsOneWithTransactions() {
 
         TestApp.transactionProvider.load()
-        TestApp.balanceProvider.setBalance(TestApp.keyStore.getCurrentAddress(), 42, ETH_IN_WEI, ETH_TOKEN)
+        TestApp.balanceProvider.setBalance(TestApp.currentAddressProvider.getCurrent(), 42, ETH_IN_WEI, ETH_TOKEN)
 
         onView(allOf(isDescendantOfA(withId(R.id.value_view)), withId(R.id.current_eth)))
                 .check(matches(withText("1")))
