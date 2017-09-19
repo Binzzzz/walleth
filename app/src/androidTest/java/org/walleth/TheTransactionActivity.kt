@@ -18,6 +18,7 @@ import org.walleth.infrastructure.TestApp
 import org.walleth.testdata.DEFAULT_TEST_ADDRESS
 import org.walleth.testdata.Room77
 import org.walleth.testdata.ShapeShift
+import org.walleth.testdata.addTestAddresses
 import java.math.BigInteger
 
 class TheTransactionActivity {
@@ -29,7 +30,7 @@ class TheTransactionActivity {
     @Test
     fun nonceIsDisplayedCorrectly() {
         TestApp.transactionProvider.addTransaction(TransactionWithState(Transaction(ETH_IN_WEI, DEFAULT_TEST_ADDRESS, DEFAULT_TEST_ADDRESS, nonce = DEFAULT_NONCE, txHash = "0xFOO"), TransactionState()))
-
+        TestApp.testDatabase.addressBook.addTestAddresses()
         rule.launchActivity(InstrumentationRegistry.getTargetContext().getTransactionActivityIntentForHash("0xFOO"))
 
         onView(withId(R.id.nonce)).check(matches(withText("11")))
@@ -37,9 +38,9 @@ class TheTransactionActivity {
 
     @Test
     fun isLabeledToWhenWeReceive() {
+        TestApp.testDatabase.addressBook.addTestAddresses()
         val transaction = Transaction(ETH_IN_WEI, from = DEFAULT_TEST_ADDRESS, to = Room77, nonce = DEFAULT_NONCE, txHash = "0xFOO12")
         TestApp.transactionProvider.addTransaction(TransactionWithState(transaction, TransactionState()))
-
         rule.launchActivity(InstrumentationRegistry.getTargetContext().getTransactionActivityIntentForHash(transaction.txHash!!))
 
         onView(withId(R.id.from_to_title)).check(matches(withText(R.string.transaction_to_label)))
@@ -49,13 +50,13 @@ class TheTransactionActivity {
 
     @Test
     fun isLabeledFromWhenWeReceive() {
+        TestApp.testDatabase.addressBook.addTestAddresses()
         val transaction = Transaction(ETH_IN_WEI, from = ShapeShift, to = DEFAULT_TEST_ADDRESS, nonce = DEFAULT_NONCE, txHash = "0xFOO21")
-         TestApp.transactionProvider.addTransaction(TransactionWithState(transaction, TransactionState()))
+        TestApp.transactionProvider.addTransaction(TransactionWithState(transaction, TransactionState()))
+        rule.launchActivity(InstrumentationRegistry.getTargetContext().getTransactionActivityIntentForHash(transaction.txHash!!))
 
-         rule.launchActivity(InstrumentationRegistry.getTargetContext().getTransactionActivityIntentForHash(transaction.txHash!!))
-
-         onView(withId(R.id.from_to_title)).check(matches(withText(R.string.transaction_from_label)))
-         onView(withId(R.id.from_to)).check(matches(withText("ShapeShift")))
+        onView(withId(R.id.from_to_title)).check(matches(withText(R.string.transaction_from_label)))
+        onView(withId(R.id.from_to)).check(matches(withText("ShapeShift")))
     }
 
 
