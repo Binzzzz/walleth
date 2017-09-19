@@ -18,31 +18,33 @@ import org.walleth.infrastructure.TestApp
 class TheNavigationDrawer {
 
     @get:Rule
-    var rule = TruleskActivityRule(MainActivity::class.java)
+    var rule = TruleskActivityRule(MainActivity::class.java, false)
 
 
     @Test
     fun navigationDrawerIsUsuallyNotShown() {
+        rule.launchActivity()
         onView(withId(R.id.navigationView)).check(matches(not(isDisplayed())))
     }
 
     @Test
     fun navigationDrawerOpensWhenRequested() {
+        rule.launchActivity()
         onView(withId(R.id.drawer_layout)).perform(open())
         onView(withId(R.id.navigationView)).check(matches(isDisplayed()))
     }
 
     @Test
     fun testNameIsDisplayedCorrectly() {
+        async(UI) {
+            async(CommonPool) {
+                TestApp.testDatabase.addressBook.upsert(AddressBookEntry(name = "espresso ligi", address = TestApp.currentAddressProvider.getCurrent()))
+            }.await()
+        }
+
+        rule.launchActivity()
         onView(withId(R.id.drawer_layout)).perform(open())
 
-        rule.runOnUiThread {
-            async(UI) {
-                async(CommonPool) {
-                    TestApp.testDatabase.addressBook.upsert(AddressBookEntry(name = "espresso ligi", address = TestApp.currentAddressProvider.getCurrent()))
-                }.await()
-            }
-        }
 
         onView(withId(R.id.accountName)).check(matches(withText("espresso ligi")))
 
